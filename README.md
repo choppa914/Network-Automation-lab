@@ -78,7 +78,6 @@ The script disables the interface, waits 60 seconds, then re-enables it. During 
 
 ## Next steps
 
-- Make configuration declarative and add `try/finally` safety to scripts
 - Add automated validation (BGP state, reachability)
 - Add Ansible and gNMI-based configuration
 - Run the lab in a CI pipeline

@@ -21,16 +21,14 @@ conn = ConnectHandler(
     global_delay_factor=4,
 )
 
-print(f"Disabling {router} {interface} ...")
-push(conn, [f"set / interface {interface} admin-state disable"])
-print(conn.send_command(f"show interface {interface} brief"))
-
-print(f"Waiting {down_seconds} seconds. Watch Grafana now.")
-time.sleep(down_seconds)
-
-print(f"Enabling {router} {interface} ...")
-push(conn, [f"set / interface {interface} admin-state enable"])
-print(conn.send_command(f"show interface {interface} brief"))
-
-conn.disconnect()
-print("Done.")
+try:
+    print(f"Disabling {router} {interface} ...")
+    push(conn, [f"set / interface {interface} admin-state disable"])
+    print(f"Waiting {down_seconds} seconds. Watch Grafana now.")
+    time.sleep(down_seconds)
+finally:
+    # Runs even if something above crashed or you pressed Ctrl+C
+    print(f"Enabling {router} {interface} ...")
+    push(conn, [f"set / interface {interface} admin-state enable"])
+    conn.disconnect()
+    print("Done. Interface restored.")
