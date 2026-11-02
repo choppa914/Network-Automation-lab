@@ -1,0 +1,69 @@
+name: st
+prefix: ""
+
+mgmt:
+  network: st
+  ipv4-subnet: 172.80.80.0/24
+
+topology:
+  defaults:
+    kind: nokia_srlinux
+
+  kinds:
+    nokia_srlinux:
+      image: ghcr.io/nokia/srlinux:25.10
+      type: ixr-d2l
+
+  nodes:
+    spine1:
+      type: ixr-d3l
+      startup-config: configs/fabric/spine1.cfg
+      mgmt-ipv4: 172.80.80.21
+    spine2:
+      type: ixr-d3l
+      startup-config: configs/fabric/spine2.cfg
+      mgmt-ipv4: 172.80.80.22
+    leaf1:
+      startup-config: configs/fabric/leaf1.cfg
+      mgmt-ipv4: 172.80.80.11
+
+    gnmic:
+      kind: linux
+      mgmt-ipv4: 172.80.80.41
+      image: ghcr.io/openconfig/gnmic:0.47.0
+      binds:
+        - configs/gnmic/gnmic-config.yml:/gnmic-config.yml:ro
+      cmd: --config /gnmic-config.yml --log subscribe
+
+    prometheus:
+      kind: linux
+      mgmt-ipv4: 172.80.80.42
+      image: quay.io/prometheus/prometheus:v3.11.3
+      binds:
+        - configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      cmd: --config.file=/etc/prometheus/prometheus.yml
+      ports:
+        - 9090:9090
+
+    grafana:
+      kind: linux
+      mgmt-ipv4: 172.80.80.43
+      image: grafana/grafana:13.0.1
+      binds:
+        - configs/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+        - configs/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+        - configs/grafana/dashboards:/var/lib/grafana/dashboards
+      ports:
+        - 3000:3000
+      env:
+        GF_INSTALL_PLUGINS: andrewbmchugh-flow-panel
+        GF_ORG_ROLE: Admin
+        GF_ORG_NAME: Main Org
+        GF_AUTH_ANONYMOUS_ENABLED: "true"
+        GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+        GF_AUTH_ANONYMOUS: "true"
+        GF_AUTH_OAUTH_AUTO_LOGIN: "true"
+
+  links:
+    - endpoints: ["spine1:e1-1", "leaf1:e1-49"]
+    - endpoints: ["spine2:e1-1", "leaf1:e1-50"]
